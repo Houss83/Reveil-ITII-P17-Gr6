@@ -15,11 +15,11 @@ void EcritureFichierTemps(FILE *fichier, time_t temps, struct tm tm);
 int main(int argc, char *argv[])
 {
     //Declaration des PID
-    int PID_reveil, PID_chrono, PID_temps, PIDa = 0, PIDb = 0, PIDc = 0;
+    int PID_reveil, PID_chrono, PID_temps, PID_CaR, PIDa = 0, PIDb = 0, PIDc = 0;
 
     //outils du menu
     int ChoixMenu = affichageMenu();
-    bool bStop;
+    bool bStop = false;
 
     //Obtention de l'heure que l'on fournira à la fonction du fils pour écriture
 	time_t t = time(NULL);
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     PID_temps=fork();
 
     if(PID_temps <0) printf("erreur");
-    if(PID_temps<0)
+    if(PID_temps>0)
     {
         //Affichage du menu jusqu'à quitter
         while (!bStop)
@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
                 if(PID_reveil == 0)
                 {
                     PIDa = getpid();
-                    printf("processus fils");
-                    execl("/usr/bin/xterm", "xterm", "-e", "./reveil.c", NULL);
+                    printf("processus fils\n");
+                    execl("/usr/bin/xterm", "xterm", "-e", "./Reveil", NULL);
                 };
                 ChoixMenu = affichageMenu();
                 break;
@@ -63,26 +63,40 @@ int main(int argc, char *argv[])
                 {
                     PIDb = getpid();
                     printf("processus fils");
-                    execl("/usr/bin/xterm", "xterm", "-e", "chronometre.c", NULL);
+                    execl("/usr/bin/xterm", "xterm", "-e", "./Chronometre", NULL);
+                };
+                ChoixMenu = affichageMenu();
+                break;
+
+                case 3:
+                printf("\nCompte a rebours choisi\n");
+                PID_chrono = fork();
+                if(PID_CaR == -1){
+                    printf("erreur");
+                }
+                if(PID_CaR == 0)
+                {
+                    PIDc = getpid();
+                    printf("processus fils");
+                    execl("/usr/bin/xterm", "xterm", "-e", "./CaR", NULL);
                 };
                 ChoixMenu = affichageMenu();
                 break;
 
                 case 0: //quitter
-                printf("\nhfekjefj\n");
                 bStop = true;
                 break;
             }
         }
+        kill(PIDa, SIGTERM);
+        kill(PIDb, SIGTERM);
+        kill(PIDc, SIGTERM);
     }
     if (PID_temps==0)
     {
         EcritureFichierTemps(fichier, t, tm);
     }
 
-    kill(PIDa, SIGTERM);
-    kill(PIDb, SIGTERM);
-    kill(PIDc, SIGTERM);
     return 0;
 }
 
@@ -92,7 +106,8 @@ int affichageMenu(void)
      printf("---Menu---\n\n");
 
      printf("1- Reveil\n");
-     printf("1- Chronometre\n");
+     printf("2- Chronometre\n");
+     printf("3- Compte a rebours\n");
      printf("0- Quitter");
 
      printf("\nVotre choix?\n\n");
